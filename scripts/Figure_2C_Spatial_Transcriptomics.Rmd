@@ -1,0 +1,192 @@
+---
+title: "R Notebook"
+output: html_notebook
+date: "25-Jul-2023"
+---
+
+# Introduction  
+A script to project and retrieve gene expression from publicly available breast cancer spatial transcriptomics data from "Spatial Transcriptomic Analysis of a Diverse Patient Cohort Reveals a Conserved Architecture in Triple-Negative Breast Cancer", doi: 10.1158/0008-5472.CAN-22-2682 .
+
+The analysis focuses on showing gene expression on an example of treatment naive and post-treatment BC slices, followed by analysis of gene co-occurence within a spot. Tissue slices 117B and 117D are used for the gene visualization analysis, while all slices are used to calculate the co-occurence.
+
+The original data is available as GSE210616. The image information had to be corrected as the submission of image files was incorrect. In the `scalefactors_json.json` file, the value for "tissue_lowres_scalef" had to be replaced by the value in "tissue_hires_scalef" to allign the spots coordinates with the re-scaled image.
+
+
+# Setup  
+## Libraries  
+```{r}
+library("Seurat")
+library("ggplot2")
+library("patchwork")
+library("dplyr")
+library("ggvenn")
+```
+
+## Data  
+Creating image files  
+```{r}
+image_117B = Read10X_Image(image.dir = "../input/117B/", image.name = "tissue_hires_image.png")
+image_117D = Read10X_Image(image.dir = "../input/117D/", image.name = "tissue_hires_image.png")
+```
+
+# Analysis  
+## Slice 117B  
+
+```{r}
+seu_117B = Load10X_Spatial(data.dir = "../input/117B/", filename = "filtered_feature_bc_matrix.h5", image = image_117B)
+seu_117B = SCTransform(seu_117B, assay = "Spatial", verbose = FALSE)
+
+seu_117B_p1 = SpatialFeaturePlot(seu_117B, features = "EPCAM", pt.size.factor = 1.5, alpha = 0) + NoLegend() + ggtitle("H&E") # empty figure with just H&E
+seu_117B_p2 = SpatialFeaturePlot(seu_117B, features = "EPCAM", pt.size.factor = 1.5)
+seu_117B_p3 = SpatialFeaturePlot(seu_117B, features = "EGFR", pt.size.factor = 1.5)
+seu_117B_p4 = SpatialFeaturePlot(seu_117B, features = "CCNE1", pt.size.factor = 1.5)
+seu_117B_p5 = SpatialFeaturePlot(seu_117B, features = "CDK2", pt.size.factor = 1.5)
+
+wrap_plots(seu_117B_p1, seu_117B_p2, seu_117B_p3, seu_117B_p4, seu_117B_p5, ncol=5)
+```
+```{r}
+pdf("../output/Figure_2C_ST_117B_genes.pdf", height=4, width=20)
+wrap_plots(seu_117B_p1, seu_117B_p2, seu_117B_p3, seu_117B_p4, seu_117B_p5, ncol=5)
+dev.off()
+```
+
+## Slice 117D  
+
+```{r}
+seu_117D = Load10X_Spatial(data.dir = "../input/117D/", filename = "filtered_feature_bc_matrix.h5", image = image_117D)
+seu_117D = SCTransform(seu_117D, assay = "Spatial", verbose = FALSE)
+
+seu_117D_p1 = SpatialFeaturePlot(seu_117D, features = "EPCAM", pt.size.factor = 1.5, alpha = 0) + NoLegend() + ggtitle("H&E") # empty figure with just H&E
+seu_117D_p2 = SpatialFeaturePlot(seu_117D, features = "EPCAM", pt.size.factor = 1.5)
+seu_117D_p3 = SpatialFeaturePlot(seu_117D, features = "EGFR", pt.size.factor = 1.5)
+seu_117D_p4 = SpatialFeaturePlot(seu_117D, features = "CCNE1", pt.size.factor = 1.5)
+seu_117D_p5 = SpatialFeaturePlot(seu_117D, features = "CDK2", pt.size.factor = 1.5)
+
+wrap_plots(seu_117D_p1, seu_117D_p2, seu_117D_p3, seu_117D_p4, seu_117D_p5, ncol=5)
+```
+```{r}
+pdf("../output/Figure_2C_ST_117D_genes.pdf", height=4, width=20)
+wrap_plots(seu_117D_p1, seu_117D_p2, seu_117D_p3, seu_117D_p4, seu_117D_p5, ncol=5)
+dev.off()
+```
+
+# Gene co-occurence across all samples  
+Listing all samples  
+```{r}
+list_of_samples = list.dirs(path="../input/", recursive = FALSE)
+list_of_samples = gsub("\\../input//", "", list_of_samples)
+list_of_samples
+```
+
+Selecting genes of interest:  
+```{r}
+GOI = c("EPCAM", "EGFR", "CCNE1", "CDK2")
+```
+
+Creating an empty data frame to contain the GEX  
+```{r}
+GEX_combined_across_slices = data.frame()
+```
+
+A loop to create a Seurat object and retrieve the GEX.
+```{r}
+for(sample_ID in list_of_samples){
+  print(sample_ID)
+  
+  image = Read10X_Image(image.dir = paste("../input/", sample_ID, sep=""), image.name = "tissue_hires_image.png")
+  seu = Load10X_Spatial(data.dir = paste("../input/", sample_ID, sep=""), filename = "filtered_feature_bc_matrix.h5", image=image)
+  seu <- SCTransform(seu, assay = "Spatial", verbose = FALSE)
+  
+  # retrieving the GEX per slice
+  GEX_SCTransformed = as.data.frame(t(as.matrix(seu@assays$SCT["EPCAM", ])))
+  colnames(GEX_SCTransformed) = "EPCAM_SCTransf"
+  GEX_raw_counts = as.data.frame(t(as.matrix(seu@assays$Spatial[GOI, ])))
+  GEX_combined = cbind(GEX_SCTransformed, GEX_raw_counts)
+  GEX_combined$sample_ID = sample_ID
+  rownames(GEX_combined) = paste(sample_ID, rownames(GEX_combined), sep="_")
+  GEX_combined_across_slices = rbind(GEX_combined_across_slices, GEX_combined)
+}
+head(GEX_combined_across_slices)
+```
+Adding information about treatment:  
+```{r}
+patient_meta = read.csv("../supplementary/metadata.csv")
+head(patient_meta)
+```
+
+Keeping only spots with found levels of EPCAM  
+```{r}
+GEX_combined_across_slices = GEX_combined_across_slices %>% filter(EPCAM >0)
+```
+
+Adding treatment and patient info  
+```{r}
+patient_meta = patient_meta %>% select(sample_ID, patient_ID, treatment)
+GEX_combined_across_slices$spot_ID = rownames(GEX_combined_across_slices)
+GEX_combined_across_slices = left_join(GEX_combined_across_slices, patient_meta, by="sample_ID")
+head(GEX_combined_across_slices)
+```
+
+Arranging columns to improve readability:
+```{r}
+GEX_combined_across_slices = GEX_combined_across_slices %>% select(spot_ID, sample_ID, patient_ID, treatment, everything())
+```
+
+Adding binarized version of GEX  
+```{r}
+GEX_combined_across_slices$EPCAM_bin = if_else(GEX_combined_across_slices$EPCAM>0, 1, 0)
+GEX_combined_across_slices$EGFR_bin = if_else(GEX_combined_across_slices$EGFR>0, 1, 0)
+GEX_combined_across_slices$CCNE1_bin = if_else(GEX_combined_across_slices$CCNE1>0, 1, 0)
+GEX_combined_across_slices$CDK2_bin = if_else(GEX_combined_across_slices$CDK2>0, 1, 0)
+```
+
+
+Splitting the data based on treatment  
+```{r}
+GEX_naive = GEX_combined_across_slices %>% filter(treatment == "naive")
+GEX_treatment = GEX_combined_across_slices %>% filter(treatment == "treatment")
+```
+
+```{r}
+GEX_naive_GOI_three = list(EGFR_ve = GEX_naive$spot_ID[GEX_naive$EGFR >0],
+                           CCNE1_ve = GEX_naive$spot_ID[GEX_naive$CCNE1 >0],
+                           CDK2_ve = GEX_naive$spot_ID[GEX_naive$CDK2 >0])
+
+ggvenn(
+  GEX_naive_GOI_three, 
+  fill_color = c("red", "yellow", "green"),
+  stroke_size = 0.5, set_name_size = 4
+  ) + ggtitle("Treatment naive")
+
+pdf("../output/Figure_2C_Venn_diagram_treatment_naive_GOI.pdf", height=7, width=7)
+ggvenn(
+  GEX_naive_GOI_three, 
+  fill_color = c("red", "yellow", "green"),
+  stroke_size = 0.5, set_name_size = 4
+  ) + ggtitle("Treatment naive")
+dev.off()
+```
+```{r}
+GEX_treatment_GOI_three = list(EGFR_ve = GEX_treatment$spot_ID[GEX_treatment$EGFR >0],
+                               CCNE1_ve = GEX_treatment$spot_ID[GEX_treatment$CCNE1 >0],
+                               CDK2_ve = GEX_treatment$spot_ID[GEX_treatment$CDK2 >0])
+
+ggvenn(
+  GEX_treatment_GOI_three, 
+  fill_color = c("red", "yellow", "green"),
+  stroke_size = 0.5, set_name_size = 4
+  ) + ggtitle("Post treatment")
+
+pdf("../output/Figure_2C_Venn_diagram_post_treatment_GOI.pdf", height=7, width=7)
+ggvenn(
+  GEX_treatment_GOI_three, 
+  fill_color = c("red", "yellow", "green"),
+  stroke_size = 0.5, set_name_size = 4
+  ) + ggtitle("Post treatment")
+dev.off()
+```
+# Session info  
+```{r}
+sessionInfo()
+```
+

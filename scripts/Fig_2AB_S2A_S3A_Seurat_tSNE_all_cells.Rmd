@@ -1,0 +1,446 @@
+---
+title: "R Notebook"
+output: html_notebook
+date: "11-Jul-2023"
+---
+
+# Introduction  
+A script to visualize clusters and gene expression across breast cancer subtypes (TNBC, HER2+ nd ER+), using publicly available data from "A single-cell RNA expression atlas of normal, preneoplastic and tumorigenic states in the human breast", DOI 10.15252/embj.2020107333 
+
+
+Data is downloaded as pre-processed Seurat objects from:
+figshare: https://figshare.com/articles/dataset/Data_R_code_and_output_Seurat_Objects_for_single_cell_RNA-seq_analysis_of_human_breast_tissues/17058077 
+
+Files used in the downstream analysis:  
+- SeuratObject_TNBC.rds
+- SeuratObject_HER2.rds
+- SeuratObject_ERTotal.rds
+
+Seurat objects are used as provided by the authors of the original manuscript. Our analysis involves visualization of gene expression and visualization of non-zero counts of genes of interest across BC subtypes. Figures are present in Figure 2 and Supplementary Figure 2 and 3.
+
+
+# Setup  
+## Libraries  
+```{r}
+library("dplyr")
+library("ggplot2")
+library("Seurat")
+library("patchwork")
+library("pheatmap")
+```
+
+## Data  
+```{r}
+TNBC = readRDS("../data/input_ST/SeuratObject_TNBC.rds")
+TNBC
+```
+
+```{r}
+HER2 = readRDS("../data/input_ST/SeuratObject_HER2.rds")
+HER2
+```
+
+```{r}
+ER = readRDS("../data/input_ST/SeuratObject_ERTotal.rds")
+ER
+```
+
+# tSNE visualizations  
+## TNBC  
+```{r}
+# clusters  
+TNBC_p1 = DimPlot(TNBC, reduction = "tsne", group.by = "seurat_clusters")
+# genes figure 2
+TNBC_p2 = FeaturePlot(TNBC, features = "EGFR", reduction = "tsne", min.cutoff = 0, order = TRUE, cols = c("lightgrey","red")) + ggtitle("EGFR")
+TNBC_p3 = FeaturePlot(TNBC, features = "CCNE1", reduction = "tsne", min.cutoff = 0, order = TRUE, cols = c("lightgrey","red"))+ ggtitle("CCNE1")
+TNBC_p4 = FeaturePlot(TNBC, features = "CDK2", reduction = "tsne", min.cutoff = 0, order = TRUE, cols = c("lightgrey","red")) + ggtitle("CDK2")
+# additional genes supplementary figure 2
+TNBC_p5 = FeaturePlot(TNBC, features = "ERBB2", reduction = "tsne", min.cutoff = 0, order = TRUE, cols = c("lightgrey","red")) + ggtitle("HER2 (ERBB2)")
+TNBC_p6 = FeaturePlot(TNBC, features = "ESR1", reduction = "tsne", min.cutoff = 0, order = TRUE, cols = c("lightgrey","red")) + ggtitle("ER (ESR1)")
+# additional genes supplementary figure 3
+TNBC_p7 = FeaturePlot(TNBC, features = "CCND1", reduction = "tsne", min.cutoff = 0, order = TRUE, cols = c("lightgrey","red")) + ggtitle("CCND1")
+TNBC_p8 = FeaturePlot(TNBC, features = "CDK4", reduction = "tsne", min.cutoff = 0, order = TRUE, cols = c("lightgrey","red")) + ggtitle("CDK4")
+TNBC_p9 = FeaturePlot(TNBC, features = "CDK6", reduction = "tsne", min.cutoff = 0, order = TRUE, cols = c("lightgrey","red")) + ggtitle("CDK6")
+
+TNBC_p1
+TNBC_p2
+TNBC_p3
+TNBC_p4
+TNBC_p5
+TNBC_p6
+TNBC_p7
+TNBC_p8
+TNBC_p9
+```
+
+## HER2  
+```{r}
+# clusters  
+HER2_p1 = DimPlot(HER2, reduction = "tsne", group.by = "seurat_clusters")
+# genes figure 2
+HER2_p2 = FeaturePlot(HER2, features = "EGFR", reduction = "tsne", min.cutoff = 0, order = TRUE, cols = c("lightgrey","red")) + ggtitle("EGFR")
+HER2_p3 = FeaturePlot(HER2, features = "CCNE1", reduction = "tsne", min.cutoff = 0, order = TRUE, cols = c("lightgrey","red"))+ ggtitle("CCNE1")
+HER2_p4 = FeaturePlot(HER2, features = "CDK2", reduction = "tsne", min.cutoff = 0, order = TRUE, cols = c("lightgrey","red")) + ggtitle("CDK2")
+# additional genes supplementary figure 2
+HER2_p5 = FeaturePlot(HER2, features = "ERBB2", reduction = "tsne", min.cutoff = 0, order = TRUE, cols = c("lightgrey","red")) + ggtitle("HER2 (ERBB2)")
+HER2_p6 = FeaturePlot(HER2, features = "ESR1", reduction = "tsne", min.cutoff = 0, order = TRUE, cols = c("lightgrey","red")) + ggtitle("ER (ESR1)")
+# additional genes supplementary figure 3
+HER2_p7 = FeaturePlot(HER2, features = "CCND1", reduction = "tsne", min.cutoff = 0, order = TRUE, cols = c("lightgrey","red")) + ggtitle("CCND1")
+HER2_p8 = FeaturePlot(HER2, features = "CDK4", reduction = "tsne", min.cutoff = 0, order = TRUE, cols = c("lightgrey","red")) + ggtitle("CDK4")
+HER2_p9 = FeaturePlot(HER2, features = "CDK6", reduction = "tsne", min.cutoff = 0, order = TRUE, cols = c("lightgrey","red")) + ggtitle("CDK6")
+
+HER2_p1
+HER2_p2
+HER2_p3
+HER2_p4
+HER2_p5
+HER2_p6
+HER2_p7
+HER2_p8
+HER2_p9
+```
+
+## ER  
+```{r}
+# clusters  
+ER_p1 = DimPlot(ER, reduction = "tsne", group.by = "seurat_clusters")
+# genes figure 2
+ER_p2 = FeaturePlot(ER, features = "EGFR", reduction = "tsne", min.cutoff = 0, order = TRUE, cols = c("lightgrey","red")) + ggtitle("EGFR")
+ER_p3 = FeaturePlot(ER, features = "CCNE1", reduction = "tsne", min.cutoff = 0, order = TRUE, cols = c("lightgrey","red"))+ ggtitle("CCNE1")
+ER_p4 = FeaturePlot(ER, features = "CDK2", reduction = "tsne", min.cutoff = 0, order = TRUE, cols = c("lightgrey","red")) + ggtitle("CDK2")
+# additional genes supplementary figure 2
+ER_p5 = FeaturePlot(ER, features = "ERBB2", reduction = "tsne", min.cutoff = 0, order = TRUE, cols = c("lightgrey","red")) + ggtitle("ER (ERBB2)")
+ER_p6 = FeaturePlot(ER, features = "ESR1", reduction = "tsne", min.cutoff = 0, order = TRUE, cols = c("lightgrey","red")) + ggtitle("ER (ESR1)")
+# additional genes supplementary figure 3
+ER_p7 = FeaturePlot(ER, features = "CCND1", reduction = "tsne", min.cutoff = 0, order = TRUE, cols = c("lightgrey","red")) + ggtitle("CCND1")
+ER_p8 = FeaturePlot(ER, features = "CDK4", reduction = "tsne", min.cutoff = 0, order = TRUE, cols = c("lightgrey","red")) + ggtitle("CDK4")
+ER_p9 = FeaturePlot(ER, features = "CDK6", reduction = "tsne", min.cutoff = 0, order = TRUE, cols = c("lightgrey","red")) + ggtitle("CDK6")
+
+ER_p1
+ER_p2
+ER_p3
+ER_p4
+ER_p5
+ER_p6
+ER_p7
+ER_p8
+ER_p9
+```
+
+# Saving files as png  
+Figure 2A  
+```{r}
+png("../output/Figure_2A.png", height=1000, width=1500)
+wrap_plots(TNBC_p1, TNBC_p2, TNBC_p3, TNBC_p4,
+           HER2_p1, HER2_p2, HER2_p3, HER2_p4,
+           ER_p1, ER_p2, ER_p3, ER_p4,
+           ncol=4)
+dev.off()
+```
+Supplementary Figure 2  
+```{r}
+png("../output/Supplementary_Figure_2A.png", height=1000, width=1500)
+wrap_plots(TNBC_p1, TNBC_p5, TNBC_p6, TNBC_p2,
+           HER2_p1, HER2_p5, HER2_p6, HER2_p2,
+           ER_p1, ER_p5, ER_p6, ER_p2,
+           ncol=4)
+dev.off()
+```
+Supplementary Figure 3  
+```{r}
+empty_figure = ggplot() + theme_void()
+```
+```{r}
+png("../output/Supplementary_Figure_3A.png", height=2000, width=1500)
+wrap_plots(TNBC_p3, TNBC_p4, empty_figure, 
+           TNBC_p7, TNBC_p8, TNBC_p9,
+           
+           HER2_p3, HER2_p4, empty_figure,
+           HER2_p7, HER2_p8, HER2_p9,
+           
+           ER_p3, ER_p4, empty_figure,
+           ER_p7, ER_p8, ER_p9,
+           ncol=3)
+dev.off()
+```
+
+# Raw counts analysis for +ve cell populations  
+## Extracting metadata  
+```{r}
+TNBC_meta = TNBC@meta.data
+head(TNBC_meta)
+
+HER2_meta = HER2@meta.data
+head(HER2_meta)
+
+ER_meta = ER@meta.data
+head(ER)
+```
+Adding tumour column info to metadata based on the original manuscript annotation  
+```{r}
+TNBC_meta$status = if_else(TNBC_meta$seurat_clusters %in% c(0, 2), "tumour", "non-tumour")
+HER2_meta$status = if_else(HER2_meta$seurat_clusters %in% c(0, 3), "tumour", "non-tumour")
+ER_meta$status = if_else(ER_meta$seurat_clusters %in% c(0, 4), "tumour", "non-tumour")
+```
+
+Selecting relevant columns from metadata   
+```{r}
+TNBC_meta = TNBC_meta %>% select(orig.ident, group, seurat_clusters, status)
+HER2_meta = HER2_meta %>% select(orig.ident, group, seurat_clusters, status)
+ER_meta = ER_meta %>% select(orig.ident, group, seurat_clusters, status)
+```
+
+Extracting genes of interest from the Seurat object  
+```{r}
+GOI = c("EPCAM", "EGFR", "CCNE1", "CDK2",
+        "ERBB2", "ESR1", 
+        "CCND1", "CDK4", "CDK6")
+
+TNBC_GOI = t(as.matrix(TNBC@assays$RNA@counts[GOI[GOI %in% rownames(TNBC@assays$RNA@counts)],]))
+head(TNBC_GOI)
+
+HER2_GOI = t(as.matrix(HER2@assays$RNA@counts[GOI[GOI %in% rownames(HER2@assays$RNA@counts)],]))
+head(HER2_GOI)
+
+ER_GOI = t(as.matrix(ER@assays$RNA@counts[GOI[GOI %in% rownames(ER@assays$RNA@counts)],]))
+head(ER_GOI)
+```
+Creating and adding binarized version of GEX  
+```{r}
+# TNBC
+TNBC_GOI_bin = TNBC_GOI[,]
+TNBC_GOI_bin[TNBC_GOI >0] = 1
+colnames(TNBC_GOI_bin) = paste(colnames(TNBC_GOI_bin), "_bin", sep="")
+TNBC_GOI = cbind(TNBC_GOI, TNBC_GOI_bin)
+head(TNBC_GOI)
+
+# HER2 
+HER2_GOI_bin = HER2_GOI[,]
+HER2_GOI_bin[HER2_GOI >0] = 1
+colnames(HER2_GOI_bin) = paste(colnames(HER2_GOI_bin), "_bin", sep="")
+HER2_GOI = cbind(HER2_GOI, HER2_GOI_bin)
+head(HER2_GOI)
+
+# ER
+ER_GOI_bin = ER_GOI[,]
+ER_GOI_bin[ER_GOI >0] = 1
+colnames(ER_GOI_bin) = paste(colnames(ER_GOI_bin), "_bin", sep="")
+ER_GOI = cbind(ER_GOI, ER_GOI_bin)
+head(ER_GOI)
+```
+
+Combining with metadata for each BC type  
+```{r}
+identical(rownames(TNBC_meta), rownames(TNBC_GOI))
+identical(rownames(HER2_meta), rownames(HER2_GOI))
+identical(rownames(ER_meta), rownames(ER_GOI))
+```
+```{r}
+TNBC_combined = cbind(TNBC_meta, TNBC_GOI)
+HER2_combined = cbind(HER2_meta, HER2_GOI)
+ER_combined = cbind(ER_meta, ER_GOI)
+```
+
+Filtering to include only tumour cells  
+```{r}
+TNBC_combined = TNBC_combined %>% filter(status == "tumour")
+HER2_combined = HER2_combined %>% filter(status == "tumour")
+ER_combined = ER_combined %>% filter(status == "tumour")
+```
+
+Calculating number of cells per patient  
+```{r}
+TNBC_tumour_cell_counts = as.data.frame(table(TNBC_combined$group))
+TNBC_tumour_cell_counts$sample_type = "TNBC_tumour"
+
+HER2_tumour_cell_counts = as.data.frame(table(HER2_combined$group))
+HER2_tumour_cell_counts$sample_type = "HER2_tumour"
+
+ER_tumour_cell_counts = as.data.frame(table(ER_combined$group))
+ER_tumour_cell_counts$sample_type = "ER_tumour"
+
+combined_patients = rbind(TNBC_tumour_cell_counts,
+                          HER2_tumour_cell_counts,
+                          ER_tumour_cell_counts)
+colnames(combined_patients) = c("patient_ID", "number_of_cells", "sample_type")
+rownames(combined_patients) = combined_patients$patient_ID
+combined_patients
+```
+
+### EPCAM +ve  
+```{r}
+EPCAM_TNBC_combined_tumour_cell_counts = as.data.frame.matrix(table(TNBC_combined$group, TNBC_combined$EPCAM_bin))
+colnames(EPCAM_TNBC_combined_tumour_cell_counts) = c("EPCAM_neg", "EPCAM_pos")
+
+EPCAM_HER2_combined_tumour_cell_counts = as.data.frame.matrix(table(HER2_combined$group, HER2_combined$EPCAM_bin))
+colnames(EPCAM_HER2_combined_tumour_cell_counts) = c("EPCAM_neg", "EPCAM_pos")
+
+EPCAM_ER_combined_tumour_cell_counts = as.data.frame.matrix(table(ER_combined$group,ER_combined$EPCAM_bin))
+colnames(EPCAM_ER_combined_tumour_cell_counts) = c("EPCAM_neg", "EPCAM_pos")
+
+EPCAM_combined = rbind(EPCAM_TNBC_combined_tumour_cell_counts, EPCAM_HER2_combined_tumour_cell_counts, EPCAM_ER_combined_tumour_cell_counts)
+
+identical(rownames(EPCAM_combined), rownames(combined_patients))
+combined_patients = cbind(combined_patients, EPCAM_combined)
+```
+
+### EGFR +ve  
+```{r}
+EGFR_TNBC_combined_tumour_cell_counts = as.data.frame.matrix(table(TNBC_combined$group, TNBC_combined$EGFR_bin))
+colnames(EGFR_TNBC_combined_tumour_cell_counts) = c("EGFR_neg", "EGFR_pos")
+
+EGFR_HER2_combined_tumour_cell_counts = as.data.frame.matrix(table(HER2_combined$group, HER2_combined$EGFR_bin))
+colnames(EGFR_HER2_combined_tumour_cell_counts) = c("EGFR_neg", "EGFR_pos")
+
+EGFR_ER_combined_tumour_cell_counts = as.data.frame.matrix(table(ER_combined$group,ER_combined$EGFR_bin))
+colnames(EGFR_ER_combined_tumour_cell_counts) = c("EGFR_neg", "EGFR_pos")
+
+EGFR_combined = rbind(EGFR_TNBC_combined_tumour_cell_counts, EGFR_HER2_combined_tumour_cell_counts, EGFR_ER_combined_tumour_cell_counts)
+
+identical(rownames(EGFR_combined), rownames(combined_patients))
+combined_patients = cbind(combined_patients, EGFR_combined)
+```
+
+### CCNE1 +ve  
+```{r}
+CCNE1_TNBC_combined_tumour_cell_counts = as.data.frame.matrix(table(TNBC_combined$group, TNBC_combined$CCNE1_bin))
+colnames(CCNE1_TNBC_combined_tumour_cell_counts) = c("CCNE1_neg", "CCNE1_pos")
+
+CCNE1_HER2_combined_tumour_cell_counts = as.data.frame.matrix(table(HER2_combined$group, HER2_combined$CCNE1_bin))
+colnames(CCNE1_HER2_combined_tumour_cell_counts) = c("CCNE1_neg", "CCNE1_pos")
+
+CCNE1_ER_combined_tumour_cell_counts = as.data.frame.matrix(table(ER_combined$group,ER_combined$CCNE1_bin))
+colnames(CCNE1_ER_combined_tumour_cell_counts) = c("CCNE1_neg", "CCNE1_pos")
+
+CCNE1_combined = rbind(CCNE1_TNBC_combined_tumour_cell_counts, CCNE1_HER2_combined_tumour_cell_counts, CCNE1_ER_combined_tumour_cell_counts)
+
+identical(rownames(CCNE1_combined), rownames(combined_patients))
+combined_patients = cbind(combined_patients, CCNE1_combined)
+```
+
+### CDK2 +ve  
+```{r}
+CDK2_TNBC_combined_tumour_cell_counts = as.data.frame.matrix(table(TNBC_combined$group, TNBC_combined$CDK2_bin))
+colnames(CDK2_TNBC_combined_tumour_cell_counts) = c("CDK2_neg", "CDK2_pos")
+
+CDK2_HER2_combined_tumour_cell_counts = as.data.frame.matrix(table(HER2_combined$group, HER2_combined$CDK2_bin))
+colnames(CDK2_HER2_combined_tumour_cell_counts) = c("CDK2_neg", "CDK2_pos")
+
+CDK2_ER_combined_tumour_cell_counts = as.data.frame.matrix(table(ER_combined$group,ER_combined$CDK2_bin))
+colnames(CDK2_ER_combined_tumour_cell_counts) = c("CDK2_neg", "CDK2_pos")
+
+CDK2_combined = rbind(CDK2_TNBC_combined_tumour_cell_counts, CDK2_HER2_combined_tumour_cell_counts, CDK2_ER_combined_tumour_cell_counts)
+```
+
+```{r}
+identical(rownames(CDK2_combined), rownames(combined_patients))
+combined_patients = cbind(combined_patients, CDK2_combined)
+```
+
+## Double positive  
+### EGFR and CCNE1  
+Creating a column with double positive calculations  
+```{r}
+TNBC_combined$EGFR_CCNE1_dbl_pos_bin = TNBC_combined$EGFR_bin + TNBC_combined$CCNE1_bin
+TNBC_combined$EGFR_CCNE1_dbl_pos_bin = if_else(TNBC_combined$EGFR_CCNE1_dbl_pos_bin >1, 1, 0)
+
+HER2_combined$EGFR_CCNE1_dbl_pos_bin = HER2_combined$EGFR_bin + HER2_combined$CCNE1_bin
+HER2_combined$EGFR_CCNE1_dbl_pos_bin = if_else(HER2_combined$EGFR_CCNE1_dbl_pos_bin >1, 1, 0)
+
+ER_combined$EGFR_CCNE1_dbl_pos_bin = ER_combined$EGFR_bin + ER_combined$CCNE1_bin
+ER_combined$EGFR_CCNE1_dbl_pos_bin = if_else(ER_combined$EGFR_CCNE1_dbl_pos_bin >1, 1, 0)
+
+
+EGFR_CCNE1_dbl_pos_TNBC_combined_tumour_cell_counts = as.data.frame.matrix(table(TNBC_combined$group, TNBC_combined$EGFR_CCNE1_dbl_pos_bin))
+colnames(EGFR_CCNE1_dbl_pos_TNBC_combined_tumour_cell_counts) = c("EGFR_CCNE1_dbl_pos_neg", "EGFR_CCNE1_dbl_pos_pos")
+EGFR_CCNE1_dbl_pos_TNBC_combined_tumour_cell_counts
+
+EGFR_CCNE1_dbl_pos_HER2_combined_tumour_cell_counts = as.data.frame.matrix(table(HER2_combined$group, HER2_combined$EGFR_CCNE1_dbl_pos_bin))
+colnames(EGFR_CCNE1_dbl_pos_HER2_combined_tumour_cell_counts) = c("EGFR_CCNE1_dbl_pos_neg", "EGFR_CCNE1_dbl_pos_pos")
+EGFR_CCNE1_dbl_pos_HER2_combined_tumour_cell_counts
+
+EGFR_CCNE1_dbl_pos_ER_combined_tumour_cell_counts = as.data.frame.matrix(table(ER_combined$group, ER_combined$EGFR_CCNE1_dbl_pos_bin))
+colnames(EGFR_CCNE1_dbl_pos_ER_combined_tumour_cell_counts) = c("EGFR_CCNE1_dbl_pos_neg", "EGFR_CCNE1_dbl_pos_pos")
+EGFR_CCNE1_dbl_pos_ER_combined_tumour_cell_counts
+
+EGFR_CCNE1_dbl_pos_combined = rbind(EGFR_CCNE1_dbl_pos_TNBC_combined_tumour_cell_counts,
+                                    EGFR_CCNE1_dbl_pos_HER2_combined_tumour_cell_counts,
+                                    EGFR_CCNE1_dbl_pos_ER_combined_tumour_cell_counts)
+
+identical(rownames(EGFR_CCNE1_dbl_pos_combined), rownames(combined_patients))
+combined_patients = cbind(combined_patients, EGFR_CCNE1_dbl_pos_combined)
+```
+
+### EGFR and CDK2  
+Creating a column with double positive calculations  
+```{r}
+TNBC_combined$EGFR_CDK2_dbl_pos_bin = TNBC_combined$EGFR_bin + TNBC_combined$CDK2_bin
+TNBC_combined$EGFR_CDK2_dbl_pos_bin = if_else(TNBC_combined$EGFR_CDK2_dbl_pos_bin >1, 1, 0)
+
+HER2_combined$EGFR_CDK2_dbl_pos_bin = HER2_combined$EGFR_bin + HER2_combined$CDK2_bin
+HER2_combined$EGFR_CDK2_dbl_pos_bin = if_else(HER2_combined$EGFR_CDK2_dbl_pos_bin >1, 1, 0)
+
+ER_combined$EGFR_CDK2_dbl_pos_bin = ER_combined$EGFR_bin + ER_combined$CDK2_bin
+ER_combined$EGFR_CDK2_dbl_pos_bin = if_else(ER_combined$EGFR_CDK2_dbl_pos_bin >1, 1, 0)
+
+
+EGFR_CDK2_dbl_pos_TNBC_combined_tumour_cell_counts = as.data.frame.matrix(table(TNBC_combined$group, TNBC_combined$EGFR_CDK2_dbl_pos_bin))
+colnames(EGFR_CDK2_dbl_pos_TNBC_combined_tumour_cell_counts) = c("EGFR_CDK2_dbl_pos_neg", "EGFR_CDK2_dbl_pos_pos")
+
+EGFR_CDK2_dbl_pos_HER2_combined_tumour_cell_counts = as.data.frame.matrix(table(HER2_combined$group, HER2_combined$EGFR_CDK2_dbl_pos_bin))
+colnames(EGFR_CDK2_dbl_pos_HER2_combined_tumour_cell_counts) = c("EGFR_CDK2_dbl_pos_neg", "EGFR_CDK2_dbl_pos_pos")
+
+EGFR_CDK2_dbl_pos_ER_combined_tumour_cell_counts = as.data.frame.matrix(table(ER_combined$group, ER_combined$EGFR_CDK2_dbl_pos_bin))
+colnames(EGFR_CDK2_dbl_pos_ER_combined_tumour_cell_counts) = c("EGFR_CDK2_dbl_pos_neg", "EGFR_CDK2_dbl_pos_pos")
+
+EGFR_CDK2_dbl_pos_combined = rbind(EGFR_CDK2_dbl_pos_TNBC_combined_tumour_cell_counts, 
+                                   EGFR_CDK2_dbl_pos_HER2_combined_tumour_cell_counts,
+                                   EGFR_CDK2_dbl_pos_ER_combined_tumour_cell_counts)
+
+identical(rownames(EGFR_CDK2_dbl_pos_combined), rownames(combined_patients))
+combined_patients = cbind(combined_patients, EGFR_CDK2_dbl_pos_combined)
+```
+
+# Heatmaps  
+## Figure 2 B left  
+Ratio calculation of positive cells to tumour cells  
+```{r}
+combined_patients$EGFR_pos_ratio = combined_patients$EGFR_pos * 100/ combined_patients$number_of_cells
+combined_patients$CCNE1_pos_ratio = combined_patients$CCNE1_pos * 100/ combined_patients$number_of_cells
+combined_patients$CDK2_pos_ratio = combined_patients$CDK2_pos * 100/ combined_patients$number_of_cells
+```
+
+```{r}
+pheatmap(log2(t(combined_patients[, c("EGFR_pos_ratio", "CCNE1_pos_ratio", "CDK2_pos_ratio")]+1)), 
+         cluster_cols = FALSE, cluster_rows = FALSE, main="Positive markers ratio - log2(value+1)")
+```
+## Figure 2B right  
+Ratio calculation of positive cells to tumour cells  
+```{r}
+combined_patients$EGFR_CCNE1_dbl_pos_ratio = combined_patients$EGFR_CCNE1_dbl_pos_pos * 100/ combined_patients$number_of_cells
+combined_patients$EGFR_CDK2_dbl_pos_ratio = combined_patients$EGFR_CDK2_dbl_pos_pos * 100/ combined_patients$number_of_cells
+```
+```{r}
+pheatmap(log2(t(combined_patients[, c("EGFR_CCNE1_dbl_pos_ratio", "EGFR_CDK2_dbl_pos_ratio")]+1)), 
+         cluster_cols = FALSE, cluster_rows = FALSE, main="Double positive markers ratio - log2(value+1)")
+```
+Saving the table and the heatmaps  
+```{r}
+write.csv(combined_patients, "../output/Figure_2B_S2_S3_positive_cell_counts.csv")
+
+pdf("../output/Figure_2B_left.pdf", height=3, width=6)
+pheatmap(log2(t(combined_patients[, c("EGFR_pos_ratio", "CCNE1_pos_ratio", "CDK2_pos_ratio")]+1)), 
+         cluster_cols = FALSE, cluster_rows = FALSE, main="Positive markers ratio - log2(value+1)")
+dev.off()
+
+pdf("../output/Figure_2B_right.pdf", height=2, width=6)
+pheatmap(log2(t(combined_patients[, c("EGFR_CCNE1_dbl_pos_ratio", "EGFR_CDK2_dbl_pos_ratio")]+1)), 
+         cluster_cols = FALSE, cluster_rows = FALSE, main="Double positive markers ratio - log2(value+1)")
+dev.off()
+```
+
+# Session info  
+```{r}
+sessionInfo()
+```
+
