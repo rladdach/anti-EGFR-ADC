@@ -1,5 +1,5 @@
 # anti-EGFR-ADC
-A github repository for single-cell RNA-seq and Visium 10x spatial transcriptomics figures 
+R scripts to investigate TNBC transcriptomic data using publicly available datasets: scRNA-seq (GSE161529) and spatial transcriptomics (GSE210616).
 
 # Figure 2AB, S2A, S3A
 A script to visualize clusters and gene expression across breast cancer subtypes (TNBC, HER2+ nd ER+), using publicly available data from "A single-cell RNA expression atlas of normal, preneoplastic and tumorigenic states in the human breast", DOI 10.15252/embj.2020107333 
